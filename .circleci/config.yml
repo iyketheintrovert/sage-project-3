@@ -227,21 +227,15 @@ jobs:
           fingerprints: ["90:c0:37:45:2e:8e:cc:c9:9d:68:62:26:75:0c:30:80"]
       - attach_workspace:
           at: ~/
+      - install_awscli
+      - install_nodejs
+      - install_ansible
       - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible tar gzip curl nodejs npm openssh-client git
-            pip install awscli
-            aws --version
-      - run:
-          name: Configure server
+          name: Run Playbook and Configure server
           command: |
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment:
-          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
-
 
 workflows:
   default:
