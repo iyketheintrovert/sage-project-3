@@ -189,6 +189,29 @@ jobs:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
 
+  configure-infrastructure:
+    docker:
+      - image:  python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["90:c0:37:45:2e:8e:cc:c9:9d:68:62:26:75:0c:30:80"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible tar gzip curl nodejs npm openssh-client git
+            pip install awscli
+            aws --version
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure      
+
+
 workflows:
   default:
     jobs:
@@ -204,3 +227,5 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
