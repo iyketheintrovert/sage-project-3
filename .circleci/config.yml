@@ -238,7 +238,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image:  python:3.10-alpine3.16
+      - image:  circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -246,24 +246,24 @@ jobs:
       - run:
           name: Install dependencies
           command:  |
-            apk add --update tar gzip curl nodejs npm openssh-client git
-            pip install awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
             aws --version
       - run:
           name: Run migrations
           command: |
-            cd backend/src
+            cd backend
             npm install
-            npm audit fix --audit-level=critical
-            npm run migrations >> migrations_dump.txt
-            cat migrations_dump.txt
+            npm audit fix --audit-level=critical --force
+            npm run migrations > migrations_dump.txt
       - run:
           name: Send migration results to kdvb.io
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               # If you are using kvdb.io, generate the bucket ID "9GE4jRtKznmVKRfvdBABBe" in your local terminal first
-              curl https://kvdb.io/{$KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:5}  -d '1'
+              curl -k https://kvdb.io/{$KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:5}  -d '1'
             else
               echo "No migrations are pending"
             fi
