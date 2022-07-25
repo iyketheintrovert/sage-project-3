@@ -120,7 +120,6 @@ jobs:
       - save_cache:
           paths:  [frontend/node_modules]
           key:  frontend-deps
-        - notify_on_failure
 
   scan-backend:
     docker:
@@ -144,7 +143,6 @@ jobs:
       - save_cache:
           paths:  [backend/node_modules]
           key:  frontend-deps
-        - notify_on_failure
 
 workflows:
   default:
