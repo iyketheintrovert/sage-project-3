@@ -259,9 +259,9 @@ jobs:
             else
               echo "No migrations are pending"
             fi
-     - revert-migrations: 
-          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
- 
+      - revert-migrations: 
+            circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
+  
 
 workflows:
   default:
