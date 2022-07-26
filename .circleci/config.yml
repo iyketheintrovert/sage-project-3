@@ -135,8 +135,8 @@ jobs:
             npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
       - save_cache:
-          paths:  [frontend/node_modules]
-          key:  frontend-build
+            paths:  [frontend/node_modules]
+            key:  frontend-build
         - notify_on_failure
 
   scan-backend:
@@ -155,9 +155,9 @@ jobs:
             npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
       - save_cache:
-          paths:  [backend/node_modules]
-          key:  frontend-build
-        - notify_on_failure
+            paths:  [backend/node_modules]
+            key:  frontend-build
+          - notify_on_failure
 
   deploy-infrastructure:
     docker:
