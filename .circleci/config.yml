@@ -35,27 +35,10 @@ commands:
             then
               cd ~/project/backend
               npm install
+              npm audit fix --audit-level=critical --force
               npm run build
               npm run migration:revert
             fi
-
-  # install_awscli:
-  #   description:  Install AWS CLI v2
-  #   steps:
-  #     - run:
-  #         name: Install AWS CLI v2
-  #         command:  |
-  #           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  #           unzip awscliv2.zip
-  #           sudo ./aws/install
-
-  # install_ansible:
-  #   description:  Install Ansible
-  #   steps:
-  #     - run:
-  #         name: Install Ansible
-  #         command:  |
-  #           python3 -m pip install --user ansible
   
   #  install_nodejs:
   #   description: Install Nodejs 13.8.0
@@ -325,7 +308,7 @@ jobs:
           name: Deploy backend
           command: |
             cd backend
-            npm install
+            sudo npm install
             npm audit fix --audit-level=critical --force
             npm audit fix --audit-level=critical
             npm audit --audit-level=critical
