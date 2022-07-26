@@ -39,17 +39,22 @@ commands:
               npm run build
               npm run migration:revert
             fi
+
+  notify_on_failure:
+    steps:
+      - slack/notify:
+          event:  fail
+          channel: cicd-pipeline
+          template: basic_fail_1
   
-  #  install_nodejs:
-  #   description: Install Nodejs 13.8.0
-  #   steps:
-  #     - run:
-  #         name: Install Nodejs 13.8.0
-  #         command:  |
-  #           curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-  #           sudo apt install -y nodejs
-  #           sudo npm install --global n
-  #           sudo n 13.8.0          
+  notify_on_success:
+    docker:
+      - image cimg/base:stable
+    steps:
+      - slack/notify:
+          event:  pass
+          channel: cicd-pipeline
+          template: success_tagged_deployment_1        
 
 jobs:
   build-frontend:
@@ -126,13 +131,13 @@ jobs:
           command:  |
             cd frontend
             npm install
-            npm audit fix --audit-level=critical --force
-      - slack/notify:
-          event:  fail
-          template: basic_fail_1
+            npm audit fix --force --audit-level=critical
+            npm audit fix --force --audit-level=critical
+            npm audit --audit-level=critical
       - save_cache:
           paths:  [frontend/node_modules]
           key:  frontend-build
+        - notify_on_failure
 
   scan-backend:
     docker:
@@ -146,16 +151,13 @@ jobs:
           command:  |
             cd backend
             npm install
-            npm audit fix --audit-level=critical --force
-      - slack/notify:
-          event:  fail
-          template: basic_fail_1
-      # - slack/notify:
-      #     event:  pass
-      #     template: success_tagged_deployment_1
+            npm audit fix --force --audit-level=critical
+            npm audit fix --force --audit-level=critical
+            npm audit --audit-level=critical
       - save_cache:
           paths:  [backend/node_modules]
           key:  frontend-build
+        - notify_on_failure
 
   deploy-infrastructure:
     docker:
@@ -370,26 +372,26 @@ jobs:
 workflows:
   default:
     jobs:
-      # - build-frontend
-      # - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
-      - run-migrations
+      #- run-migrations
       #     requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
+      #- deploy-frontend:
+       #   requires: [run-migrations]
       # - deploy-backend:
       #     requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-frontend]
+      #- smoke-test:
+       #   requires: [deploy-frontend]
           #requires: [deploy-backend, deploy-frontend]
