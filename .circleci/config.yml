@@ -418,6 +418,7 @@ jobs:
       - revert-migrations:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
+  
   cleanup:
     docker:
       - image: amazon/aws-cli
@@ -449,6 +450,7 @@ jobs:
               echo "No old stacks to be deleted"
             fi
 
+
 workflows:
   default:
     jobs:
@@ -477,7 +479,7 @@ workflows:
       #     requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update
+      #- cloudfront-update:
           # requires: [smoke-test]
-      # - cleanup:
+      - cleanup
       #     requires: [cloudfront-update]
