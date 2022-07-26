@@ -47,6 +47,24 @@ commands:
           channel: cicd-pipeline
           template: basic_fail_1
 
+  insall_awscli:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command:  |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+  
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          commans:  |
+            python3 -m pip install --user ansible
+
 jobs:
   build-frontend:
     docker:
@@ -159,10 +177,10 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image:  amazon/aws-cli
+      - image:  cimg/python:3.10
     steps:
       - checkout
-      - run:  yum -y install tar gzip git openssh-client aws-cli
+      - install_awscli
       - run:
           name: Ensure back-end infrastructure exists
           command:  |
@@ -182,14 +200,11 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            backend_ec2_public_ip=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:5}" \
-              --output text) 
-            echo "$backend_ec2_public_ip"  
-            echo "$backend_ec2_public_ip" >> ~/env_vars.txt
-            cat ~/env_vars.txt
-            echo "$backend_ec2_public_ip" >> .circleci/ansible/inventory.txt
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+               --output text)
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
@@ -382,6 +397,9 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [master]
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
       #- run-migrations
