@@ -134,10 +134,12 @@ jobs:
             npm audit fix --force --audit-level=critical
             npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
+      - slack/notify:
+          event:  fail
+          template: basic_fail_1
       - save_cache:
-            paths:  [frontend/node_modules]
-            key:  frontend-build
-        - notify_on_failure
+          paths:  [frontend/node_modules]
+          key:  frontend-build
 
   scan-backend:
     docker:
@@ -154,10 +156,15 @@ jobs:
             npm audit fix --force --audit-level=critical
             npm audit fix --force --audit-level=critical
             npm audit --audit-level=critical
+      - slack/notify:
+          event:  fail
+          template: basic_fail_1
+      # - slack/notify:
+      #     event:  pass
+      #     template: success_tagged_deployment_1
       - save_cache:
-            paths:  [backend/node_modules]
-            key:  frontend-build
-          - notify_on_failure
+          paths:  [backend/node_modules]
+          key:  frontend-build
 
   deploy-infrastructure:
     docker:
@@ -389,9 +396,9 @@ workflows:
       #- run-migrations
       #     requires: [configure-infrastructure]
       #- deploy-frontend:
-       #   requires: [run-migrations]
+      #    requires: [run-migrations]
       # - deploy-backend:
       #     requires: [run-migrations]
       #- smoke-test:
-       #   requires: [deploy-frontend]
+      #    requires: [deploy-frontend]
           #requires: [deploy-backend, deploy-frontend]
