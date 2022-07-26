@@ -265,9 +265,9 @@ jobs:
           else
             echo "No migrations are pending"
           fi
-    - save_cache:
-        paths:  [backend/node_modules]
-        key:  backend-build
+      - save_cache:
+          paths:  [backend/node_modules]
+          key:  backend-build
       - revert-migrations:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
