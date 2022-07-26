@@ -62,7 +62,7 @@ commands:
     steps:
       - run:
           name: Install Ansible
-          commans:  |
+          command:  |
             python3 -m pip install --user ansible
 
 jobs:
