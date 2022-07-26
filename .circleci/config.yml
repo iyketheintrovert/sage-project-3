@@ -35,8 +35,6 @@ commands:
             then
               cd ~/project/backend
               npm install
-              npm audit fix --audit-level=critical --force
-              npm run build
               npm run migration:revert
             fi
 
@@ -64,6 +62,20 @@ commands:
           name: Install Ansible
           command:  |
             python3 -m pip install --user ansible
+
+  install_nodejs:
+    description:  Install Node.js 13.8.0
+    steps:
+      - run:
+          name: Install Node.js
+          command:  |
+            # Install Node.js LTS version as our base Node.js version
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt install -y nodejs
+
+            # Use n version manager to use Node.js v13.8.0
+            sudo npm install --global n
+            sudo n 13.8.0
 
 jobs:
   build-frontend:
@@ -234,33 +246,32 @@ jobs:
 
   run-migrations:
     docker:
-      - image:  circleci/node:13.8.0
+      - image:  cimg/python:3.10
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command:  |
-            sudo apt install -y tar gzip curl
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -qq awscliv2.zip
-            sudo ./aws/install
+      - install_awscli
+      - install_nodejs
       - restore_cache:
           keys: [backend-build]
       - run:
           name: Run migrations
           command:  |
             cd backend
+            npm install
             npm run migrations >> migrations.txt
+            cat migrations.txt
       - run:
           name: Send migration results to kvdb.io
           command:  |
             if grep -q "has been executed successfully." ~/project/backend/migrations.txt
             then
-              curl -k https://kvdb.io/{$KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:5} -d  '1'
+              curl https://kvdb.io/{$KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:5} -d  '1'
             fi
       - save_cache:
           paths:  [backend/node_modules]
           key:  backend-build
+      - destroy-environment:
+          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
       - revert-migrations:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
@@ -400,8 +411,8 @@ workflows:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      #- run-migrations
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       #- deploy-frontend:
       #    requires: [run-migrations]
       # - deploy-backend:
