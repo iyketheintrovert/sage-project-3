@@ -266,6 +266,43 @@ jobs:
       - revert-migrations:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
+  deploy-frontend:
+    docker:
+      - image:  python:3.10-alpine3.16
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/  
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update tar gzip curl aws-cli nodejs npm openssh-client git
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:5}" \
+              --output text)
+            
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:5}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
+      - destroy-environment:
+          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
+      - revert-migrations: 
+          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
 workflows:
   default:
@@ -286,6 +323,6 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-     # - deploy-frontend:
-     #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
       
