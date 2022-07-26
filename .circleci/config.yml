@@ -304,6 +304,39 @@ jobs:
       - revert-migrations: 
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
+  deploy-backend:
+    docker:
+      - image:  python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:  ["90:c0:37:45:2e:8e:cc:c9:9d:68:62:26:75:0c:30:80"]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible tar gzip curl nodejs aws-cli npm openssh-client git
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm install
+            npm run build
+            cd ..
+            tar -C bacend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            cd .circleci/ansible
+            echo "contents of the inventory.txt file is ------"$(cat inventory.txt)
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment:
+          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
+      - revert-migrations: 
+          circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
+
 workflows:
   default:
     jobs:
@@ -319,10 +352,12 @@ workflows:
       #     requires: [build-frontend]
       - deploy-infrastructure
           #requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      - deploy-frontend:
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      - deploy-backend:
           requires: [run-migrations]
       
