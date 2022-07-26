@@ -411,7 +411,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --stack-name InitialStack \
-              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5}" \
+              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
               --tags project=udapeople
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
