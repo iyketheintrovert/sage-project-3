@@ -47,7 +47,7 @@ commands:
           channel: cicd-pipeline
           template: basic_fail_1
 
-  insall_awscli:
+  install_awscli:
     description: Install AWS CLI v2
     steps:
       - run:
