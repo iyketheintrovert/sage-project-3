@@ -431,7 +431,8 @@ jobs:
             --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
             --tags project=udapeople
       - persist_to_workspace:
-          at: ~/
+          root: ~/
+          paths:  [project/backend]
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
       - revert-migrations:
