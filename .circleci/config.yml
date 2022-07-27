@@ -402,6 +402,10 @@ jobs:
       - checkout
       - install_awscli
       - run:
+          name: Install dependencies
+          command:  |
+            sudo apt install -y tar gzip
+      - run:
           name: Update cloudfront distribution
           command: |
             export OldWorkflowID=$(aws cloudformation list-exports \
