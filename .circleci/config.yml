@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  slack: circleci/slack@4.1
+  slack: circleci/slack@4.10.1
 
 parameters:
   workflow_id:
@@ -479,9 +479,9 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # filters:
-          #   branches:
-          #     only: [master]
+          filters:
+            branches:
+              only: [dev-branch]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
