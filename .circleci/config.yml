@@ -246,6 +246,8 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - persist_to_workspace:
+          root: ~/
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
@@ -258,6 +260,8 @@ jobs:
       - install_nodejs
       - restore_cache:
           keys: [backend-build]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Run migrations
           command:  |
@@ -377,7 +381,7 @@ jobs:
 
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            if curl "${API_URL}/api/status" | grep "ok"
+            if curl -s "${API_URL}/api/status" | grep "ok"
             then
                 return 0
             else
@@ -449,17 +453,16 @@ jobs:
           command: |
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws s3api delete-bucket --bucket "udapeople-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-              echo "Old Stacks removed completely"
+              # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              # aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              # echo "Old Stacks removed completely"
             else
               echo "No old stacks to be deleted"
             fi
 
 workflows:
-  default:
+  udapeople-workspace:
     jobs:
       - build-frontend
       - build-backend
@@ -488,5 +491,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup
-      #     requires: [cloudfront-update]
+      - cleanup
+          requires: [cloudfront-update]
