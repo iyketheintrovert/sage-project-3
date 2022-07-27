@@ -397,28 +397,26 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image:  circleci/node:13.8.0
+      - image:  amazon/aws-cli
     steps:
       - checkout
-      - install_awscli
+      - run:
+          name: Install dependencies
+          command:  |
+            yum install -y tar gzip npm nodejs
       - run:
           name: Update cloudfront distribution
           command: |
             export OldWorkflowID=$(aws cloudformation list-exports \
-              --query "Exports[?Name==\`WorkflowID\`].Value" \
-              --no-paginate --output text) > ~/oldWorkflowId.txt
-            cat ~/oldWorkflowId.txt
+            --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)  
 
             aws cloudformation deploy \
-              --template-file .circleci/files/cloudfront.yml \
-              --stack-name InitialStack \
-              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
-              --tags project=udapeople
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
+            --tags project=udapeople
       - persist_to_workspace:
-          at: ~/
-          path:
-            - oldWorkflowId.txt
-      - attach_workspace:
           at: ~/
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
@@ -439,26 +437,28 @@ jobs:
       - run:
           name: Get old stack workflow id
           command: |
-            export OldWorkflowID=$(cat ~/oldWorkflowId.txt)
+            export OldWorkflowID=<<pipeline.parameter.workflow_id>>
+            export STACKS=$(aws cloudformation list-stacks \
+            --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
             echo OldWorkflowID: "${OldWorkflowID}"
 
       - run:
           name: Remove old stacks and files
           command: |
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            export OldWorkflowID=$(cat ~/oldWorkflowId.txt)
-            echo OldWorkflowID: "${OldWorkflowID}"
-            echo Stack names: "${STACKS[@]}" 
-            if [[ "${CIRCLE_WORKFLOW_ID:0:5}" != "${OldWorkflowID}" ]]
+            # export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            #   --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+            # export OldWorkflowID=$(cat ~/oldWorkflowId.txt)
+            # echo OldWorkflowID: "${OldWorkflowID}"
+            # echo Stack names: "${STACKS[@]}" 
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws s3api delete-bucket --bucket "udapeople-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               echo "Old Stacks removed completely"
-            else
-              echo "--------No old stacks to be deleted----------"
+            # else
+            #   echo "--------No old stacks to be deleted----------"
             fi
 
 workflows:
