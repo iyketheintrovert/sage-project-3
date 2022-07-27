@@ -425,7 +425,8 @@ jobs:
         - checkout
         - run:
             name: Install dependencies
-            command: yum install tar gzip -y
+            command: |
+              yum install tar gzip -y
         - attach_workspace:
             at: ~/
         - run:
