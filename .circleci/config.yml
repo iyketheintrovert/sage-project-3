@@ -239,22 +239,8 @@ jobs:
       - run:
           name: Run Playbook and Configure server
           command: |
-            echo  ENVIRONMENT=production > backend/ .env
-            echo  TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/ .env
-            echo  TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/ .env
-            echo  TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/ .env
-            echo  TYPEORM_HOST=$TYPEORM_HOST >> backend/ .env
-            echo  TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/ .env
-            echo  TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/ .env
-            echo  TYPEORM_PASSWORD=$TYPEORM_PASSSWORD >> backend/ .env
-            echo  TYPEORM_PORT=$TYPEORM_PORT >> backend/ .env
-            echo  TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/ .env
-            cat backend/ .env
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
-      - persist_to_workspace:
-          root: ~/
-          paths:  [project/backend]
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
@@ -411,28 +397,22 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image:  amazon/aws-cli
+      - image:  circleci/node:13.8.0
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command:  |
-            yum install -y tar gzip npm nodejs
+      - install_awscli
       - run:
           name: Update cloudfront distribution
           command: |
             export OldWorkflowID=$(aws cloudformation list-exports \
-            --query "Exports[?Name==\`WorkflowID\`].Value" \
-            --no-paginate --output text)  
+              --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
 
             aws cloudformation deploy \
-            --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack \
-            --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
-            --tags project=udapeople
-      - persist_to_workspace:
-          root: ~/
-          paths:  [project/backend]
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:5} \
+              --tags project=udapeople
       - destroy-environment:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
       - revert-migrations:
@@ -445,39 +425,32 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: |
-            yum install tar gzip -y
+          command: yum install tar gzip -y
       - attach_workspace:
           at: ~/
       - run:
           name: Get old stack workflow id
           command: |
-            export OldWorkflowID=<<pipeline.parameter.workflow_id>>
-            export STACKS=$(aws cloudformation list-stacks \
+            export OldWorkFlowID=<<pipeline.parameters.workflow_id>>
+            export STACKS=$(aws cloudformation list-stacks  \
             --query "StackSummaries[*].StackName" \
             --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
-            echo OldWorkflowID: "${OldWorkflowID}"
-
       - run:
           name: Remove old stacks and files
           command: |
-            # export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-            #   --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            # export OldWorkflowID=$(cat ~/oldWorkflowId.txt)
-            # echo OldWorkflowID: "${OldWorkflowID}"
-            # echo Stack names: "${STACKS[@]}" 
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws s3api delete-bucket --bucket "udapeople-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               echo "Old Stacks removed completely"
-            # else
-            #   echo "--------No old stacks to be deleted----------"
+            else
+              echo "No old stacks to be deleted"
             fi
 
 workflows:
-  udapeople-workspace:
+  default:
     jobs:
       - build-frontend
       - build-backend
