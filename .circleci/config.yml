@@ -464,30 +464,6 @@ jobs:
       - revert-migrations:
           circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
 
-  # prometheus-node-exporter:
-  #   docker:
-  #     - image:  python:3.10-alpine:3.16
-  #   steps:
-  #     - checkout
-  #     - add_ssh_keys:
-  #         fingerprints: ["90:c0:37:45:2e:8e:cc:c9:9d:68:62:26:75:0c:30:80"]
-  #     - run:
-  #         name: Install dependencies
-  #         command:  |
-  #           apk add --update aws-cli tar gzip ansible nodejs npm
-  #     - attach_workspace:
-  #         at: ~/
-  #     - run:
-  #         name: Setup Node Exporter
-  #         command:  |
-  #           cd .circleci/ansible
-  #           cat inventory.txt
-  #           ansible-playbook -i inventory.txt node-exporter.yml
-  #     - destroy-environment:
-  #         circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
-  #     - revert-migrations:
-  #         circle_workflow_id: "${CIRCLE_WORKFLOW_ID:0:5}"
-
 workflows:
   udapeople-workspace:
     jobs:
