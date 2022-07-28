@@ -30,7 +30,6 @@
 #   become: true
 #   shell: |
 #     sudo useradd --no-create-home node_exporter
-
 # - name: install Node Exporter binaries
 #   shell: |
 #     wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
@@ -56,10 +55,10 @@
 #       [Install]
 #       WantedBy=multi-user.target
 
-- name: enable node_exporter service
-  become: true
-  shell: |
-    sudo systemctl daemon-reload
-    sudo systemctl enable node-exporter
-    sudo systemctl start node-exporter
-    sudo systemctl status node-exporter
+# - name: enable node_exporter service
+#   become: true
+#   shell: |
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable node-exporter
+#     sudo systemctl start node-exporter
+#     sudo systemctl status node-exporter
