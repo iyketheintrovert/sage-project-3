@@ -506,8 +506,10 @@ workflows:
           filters:
             branches:
               only: [master]
-      - configure-infrastructure:
+      - prometheus-node-exporter:
           requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [prometheus-node-exporter]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
@@ -517,8 +519,6 @@ workflows:
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
-          requires: [smoke-test]
-      - prometheus-node-exporter:
           requires: [smoke-test]
       # - cleanup:
       #     requires: [cloudfront-update, prometheus-node-exporter]
